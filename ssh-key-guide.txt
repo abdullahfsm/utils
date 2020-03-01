@@ -1,0 +1,11 @@
+# guide written to create ssh key-pairs and install them
+# meant for N machines
+
+# steps
+1. create N keys using: ssh-keygen -f path_to_file
+2. append all to authorized_keys using: cat authorized_keys k1.pub .. kN.pub > temp; mv temp > authorized_keys
+3. disseminate k_i to machine i using:
+	cat k_i.pub | sudo ssh n_i "cat > ~/.ssh/k_i.pub"
+	cat k_i | sudo ssh n_i "cat > ~/.ssh/k_i"
+4. disseminate authorized_keys to all servers using: cat authorized_keys | sudo ssh n_i "cat > ~/.ssh/authorized_keys"
+5. create ssh config with appropriate IdentityFile and hotnames + disseminate to all machines
