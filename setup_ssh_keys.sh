@@ -10,6 +10,13 @@ done
 cat ~/.ssh/authorized_keys k0.pub k1.pub k2.pub k3.pub > authorized_keys
 
 #create config
+rm config
+for i in 0 1 2 3
+do
+        echo $"Host n$i" >> config
+	echo $"	HostName 10.1.1.$(( 2+i ))" >> config
+	echo $"	IdentityFile ~/.ssh/key" >> config
+done
 
 #disseminate to all nodes
 for i in 0 1 2 3
