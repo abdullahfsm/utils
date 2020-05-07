@@ -1,6 +1,4 @@
 import sys
-import matplotlib
-matplotlib.use('Agg')
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
@@ -21,42 +19,38 @@ Following lines, each has information about one type of a
 scheme. Each scheme result has a scheme name followed by
 stdev, mean, 90th, 95th, 99th and 99.9th percentile values
 '''
-def set_size(fig):
-	width = 5.0  # in
-	height = 3.0   # in
-	fig.set_size_inches(width, height)
-	plt.tight_layout()
+
+
+
+def multi_line(groups):
+	new_groups = []
+	for g in groups:
+		g = g.replace("_"," ")
+		a = g.split("\\n")
+		new_groups.append("\n".join(a))
+	return new_groups[:]
 
 def set_style():
-    	#plt.style.use(['seaborn-ticks', 'seaborn-paper'])
-    	plt.style.use('seaborn-white')
-	mpl.rc("font", family="monospace")
+	#plt.style.use(['seaborn-ticks', 'seaborn-paper'])
+	
+	plt.style.use('seaborn-paper')
+	# mpl.rc("font", family="monospace")
 	mpl.rcParams['pdf.fonttype'] = 42
+	mpl.rcParams['ps.fonttype'] = 42
 
-def get_error_style():
-	style_dict=dict()
-	style_dict['elinewidth']=4
-	style_dict['ecolor']='black'
-	style_dict['capstyle']='butt'
-	return style_dict
 
-scheme_dict={
-	"Large": 0,
-	"Large-high": 0,
-	"Large-low": 5,
-	"Small": 8
-}
-# scheme_dict["Standalone"]=0
-# scheme_dict["Primary"]=1
-# scheme_dict["DAS"]=2
-
+def set_frame(ax):
+	ax.spines['top'].set_visible(False)
+	ax.spines['right'].set_visible(False)
+	#ax.spines['top'].set_linewidth(2)
+	#ax.spines['right'].set_linewidth(2)
+	ax.spines['bottom'].set_linewidth(2)
+	ax.spines['left'].set_linewidth(2)
+	ax.xaxis.set_label_position('top')
 
 def plot(filename):
 
-
-	fig, ax = plt.subplots()
-
-	
+	set_style()
 	with open(filename,'r') as fileHandle:
 		count = 0
 		scheme_count = 0
@@ -67,98 +61,95 @@ def plot(filename):
 		scheme_count = 0
 		groups = []
 		data = []
+		stdev = []
 
-		clr = ['grey', 'cyan', 'mediumspringgreen', 'red', 'lightsalmon', 'k', 'white', 'blue', 'magenta']
-		pat = ["..", "///", "o" , "--", "xx", "\\\\\\", "**","+","O"]
-
-		font = font_manager.FontProperties(family='monospace')
-		fig, ax = plt.subplots()		
-		width = 0.24
-		opacity = 0.8
-		set_size(fig)
-		set_style()
-		error_style = get_error_style()
-	
-		
-		# ax.set_yscale('log')
-		i=0
 		for line in fileHandle:
 			if line.startswith("#"):
 				continue
-			key, val = line.split(":")
-			if key == "title":
-				title = val.rstrip()
-			elif key == "axis_labels":
-				x_label, y_label = val.rstrip().split(' ')
-				x_label = x_label.replace("_"," ")
-				y_label = y_label.replace("_"," ")
-			elif key == "groups_labels":
-				groups = val.rstrip().split(' ')
+			if count == 0:
+				title = line.rstrip()
+			elif count == 1:
+				x_label, y_label = line.rstrip().split(' ')
+				if (x_label == "_"):
+					x_label = " "
+				else:
+					x_label = x_label.replace("_"," ")
+				if (y_label == "_"):
+					y_label = ""
+				else:
+					y_label = y_label.replace("_"," ")
+
+			elif count == 2:
+				groups = line.rstrip().split(' ')[1:]
 				group_count = len(groups)
-				grp_ind = np.arange(int(group_count))
-			elif key == "axis_values":
-				xmin, xmax, xstep, ymin, ymax, ystep = map(float, (val.rstrip().split(' ')))
-				#xmin, xmax, ymin, ymax = val.rstrip().split(' ')
-			elif key == "data":
-				avg_val=[]
-				max_val=[]
-				min_val=[]
-				val = val.rstrip().split(' ')
-				scheme = val[0]
-				data = val[1:]
-				# print data
-				for info in data:
-					values = info.split(",")
-					values = map(float, values)
-					# values = [v for v in values]
-					avg_val.append(values[0])
-					max_val.append(values[1]-values[0])
-					min_val.append(values[0]-values[2])
+				scheme_count = line.split(' ')[0]
+			elif count == 3:
+				xmin, xmax, ymin, ymax = line.rstrip().split(' ')
+			else:
+				line = line.strip().split(' ')
+					
+				scheme_name.append(line[0].replace("_"," "))
+				data.append(line[1:])
+			count = count + 1
 
+		fig, ax = plt.subplots()		
+		#grp_ind = np.arange(int(group_count))
+		grp_ind = np.arange(0,2,1)
+		# grp_ind = np.arange(0,2,0.5)
+		offset = 10
+		width = 0.2
+		opacity = 0.8
 
-				error = [min_val, max_val]
-				grp_ind = grp_ind + width
-				# i = get_key(scheme)
-
-				i = scheme_dict[scheme]
-
-
-				rects = plt.bar(grp_ind, values, width, alpha=opacity, color=clr[i], edgecolor='k', hatch=pat[i], label=scheme, zorder=3)
-				# rects = plt.bar(grp_ind, avg_val, width, alpha=opacity, color=clr[i], edgecolor='k', hatch=pat[i], label=scheme, yerr=error, error_kw=error_style, zorder=3)
-			
-				#grp_ind = grp_ind + width
-				i = i+1
-
-
-	        #plt.xlabel(x_label, fontsize=20, family='seaborn-paper')
-
-	        plt.xlabel(x_label, fontsize=20)
-        	plt.ylabel(y_label, fontsize=20)
-	
-		plt.ylim(float(ymin),float(ymax))
-		plt.legend(loc="best",fontsize=15,frameon=False)
+		# clr = ['grey', 'cyan', 'mediumspringgreen', 'r', 'lightsalmon', 'r', 'k']
+		clr = ['b', 'k','r','k', 'k']
+		# pat = ["..", "///", "o" , "--", "...", "\\\\\\", "o","--"]
+		pat = ["", "","", "o" , "--" ]
 		
-		plt.xticks(grp_ind-1*width, groups)
-		plt.yticks(np.arange(ymin,ymax,ystep))
-		
-		plt.tight_layout()
-		# plt.grid()
-		# plt.grid(color='k', linestyle='--', linewidth=0.5, zorder=0)
-		# ax.xaxis.grid(False)
+		i = 0
+		rects = []
+		grp_ind += offset
+
+		for line in data:
+			#print line 
+			error = []
+			line = map(float, line)
+			if i == 1:
+				rects = plt.bar(grp_ind, line, width, alpha=opacity, color='w', edgecolor='w', hatch=pat[i], label="_nolegend")
+			else:
+				rects = plt.bar(grp_ind, line, width, alpha=opacity, color=clr[i], edgecolor='w', hatch=pat[i], label=scheme_name[i])
+			grp_ind = grp_ind + width
+			i = i+1
+
+		set_frame(ax)
 
 
 
+		#x-axis Setup 
+		plt.xlabel(x_label, fontsize=20)
+		ax.xaxis.set_label_coords(0.5, -0.22)
+
+		groups = multi_line(groups)
+
+		# print(str(groups))
+
+		plt.xticks(0.1 + grp_ind-2*width, groups)
 		for tick in ax.get_xticklabels():
-    			tick.set_fontsize(14)
+				tick.set_fontsize(20)
+		
+		#y-axis Setup 
+		plt.ylabel(y_label, fontsize=20)
+		# plt.yticks([0, 10, 20, 30, 40, 50, 55, 60, 65, 70])
+		# plt.yticks(range(0,100,20))
+		plt.yticks(range(0,4,1))
+		plt.ylim(float(0),float(ymax))
 		for tick in ax.get_yticklabels():
-    			tick.set_fontsize(14)
-			#tick.set_family('serif')
+				tick.set_fontsize(20)
+		
+		# plt.legend(loc="upper left", fontsize=12,frameon=True, ncol=3)		
+		plt.legend(loc="upper center", fontsize=20,frameon=True, ncol=3)		
+		plt.tight_layout()
 	
-		#box = ax.get_position()
-		#ax.set_position([box.x0, box.y0 + box.height * 0.1, box.width, box.height * 0.9])	
-	
-
-		plt.savefig(title+".pdf", bbox_inches='tight')
+		plt.savefig(title+".png", bbox_inches='tight')
 	fileHandle.close()
 
 if __name__ == "__main__":

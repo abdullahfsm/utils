@@ -1,0 +1,9 @@
+Perf
+_ Normalized_Tail_FCT_(99${^{th}}$)
+#_ FCTs
+#1 Tail_(99${^{th}}$) Median_(50${^{th}}$)
+1 Data_mining\n(Heavy-tailed) Uniform\n(Light-tailed)
+0 0 0 4
+FS 1 1.9
+2D 0.8 1
+FIFO 3 1
